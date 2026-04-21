@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     max_queue_size: int = Field(default=0, ge=0)
     queue_timeout: float = Field(default=0.0, ge=0.0)
     max_audio_bytes: int = Field(default=20 * 1024 * 1024, ge=1)
+    cors_enabled: bool = False
 
     @property
     def voices_path(self) -> Path:

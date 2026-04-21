@@ -86,6 +86,7 @@ curl -X POST localhost:8000/v1/audio/speech \
 | `MAX_QUEUE_SIZE` | `0` | 0 = 不限 |
 | `QUEUE_TIMEOUT` | `0` | 秒；0 = 不限 |
 | `MAX_AUDIO_BYTES` | `20971520` | `/v1/audio/clone` 上传大小限制 |
+| `CORS_ENABLED` | `false` | 设为 `true` 时挂载 `CORSMiddleware`，对**所有端点**放开任意 origin / method / header（不带凭证，详见[规范 §3.7](https://github.com/OpenTTSGroup/open-tts-spec/blob/main/http-api-spec.md#37-cors)）。反向代理前置或同源调用时保持 `false`。 |
 
 ## Compose
 

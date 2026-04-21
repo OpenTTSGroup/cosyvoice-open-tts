@@ -92,6 +92,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="cosyvoice-open-tts", version="1.0.0", lifespan=lifespan)
 
+if get_settings().cors_enabled:
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 # ---------------------------------------------------------------------------
 # Helpers

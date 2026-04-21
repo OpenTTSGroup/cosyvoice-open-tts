@@ -11,6 +11,8 @@ services:
       COSYVOICE_MODEL: "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
       COSYVOICE_VARIANT: "v3"
       LOG_LEVEL: "info"
+      # Uncomment to let browsers call the API from any origin:
+      # CORS_ENABLED: "true"
       # Uncomment to fall back to CPU on a host without NVIDIA drivers:
       # COSYVOICE_DEVICE: "cpu"
       # COSYVOICE_DTYPE: "float32"

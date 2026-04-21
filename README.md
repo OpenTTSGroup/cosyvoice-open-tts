@@ -89,6 +89,7 @@ curl -X POST localhost:8000/v1/audio/speech \
 | `MAX_QUEUE_SIZE` | `0` | 0 = unbounded queue |
 | `QUEUE_TIMEOUT` | `0` | seconds; 0 = unbounded wait |
 | `MAX_AUDIO_BYTES` | `20971520` | upload limit for `/v1/audio/clone` |
+| `CORS_ENABLED` | `false` | `true` mounts a `CORSMiddleware` that allows any origin / method / header on every endpoint (no credentials — see the [spec](https://github.com/OpenTTSGroup/open-tts-spec/blob/main/http-api-spec.md#37-cors)). Keep `false` when the service is fronted by a reverse proxy or called same-origin. |
 
 ## Compose
 

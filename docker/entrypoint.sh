@@ -13,11 +13,12 @@ set -euo pipefail
 : "${HOST:=0.0.0.0}"
 : "${PORT:=8000}"
 : "${LOG_LEVEL:=info}"
+: "${CORS_ENABLED:=false}"
 : "${PYTHONPATH:=/opt/api/engine:/opt/api/engine/third_party/Matcha-TTS}"
 : "${COSYVOICE_ROOT:=/opt/api/engine}"
 
 export COSYVOICE_MODEL COSYVOICE_VARIANT COSYVOICE_DEVICE COSYVOICE_DTYPE \
-       COSYVOICE_MODEL_SOURCE VOICES_DIR HOST PORT LOG_LEVEL \
+       COSYVOICE_MODEL_SOURCE VOICES_DIR HOST PORT LOG_LEVEL CORS_ENABLED \
        PYTHONPATH COSYVOICE_ROOT
 
 if [ "$#" -eq 0 ]; then
