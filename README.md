@@ -1,5 +1,7 @@
 # cosyvoice-open-tts
 
+**English** · [中文](./README.zh.md)
+
 OpenAI-compatible HTTP TTS service built on top of
 [CosyVoice](https://github.com/FunAudioLLM/CosyVoice). Ships as a single CUDA
 container image on GHCR.
@@ -53,8 +55,6 @@ curl -X POST localhost:8000/v1/audio/speech \
 | `design` | `false` | CosyVoice needs a reference clip; `/v1/audio/design` is not exposed |
 | `languages` | `false` | mixed Chinese/English/Japanese/Korean/Cantonese text works inline |
 | `builtin_voices` | depends on the model | `true` for models that ship a populated `spk2info.pt` (e.g. `iic/CosyVoice2-0.5B`); `false` for pure zero-shot checkpoints (e.g. `Fun-CosyVoice3-0.5B-2512`) |
-
-`instructions` is accepted on all synthesis endpoints.
 
 ## Environment variables
 
@@ -121,9 +121,6 @@ The tables below describe the POST endpoints that accept a request body. The
 | `response_format` | enum | `mp3` | supported | One of `mp3`/`opus`/`aac`/`flac`/`wav`/`pcm`. Global default overridden by `DEFAULT_RESPONSE_FORMAT`. |
 | `speed` | float | `1.0` | supported | Range `[0.25, 4.0]`. Passed through to `inference_*(speed=…)`. |
 | `instructions` | string \| null | `null` | conditional | With `voice="file://…"` and a non-empty value: the engine routes to `inference_instruct2` using this string as the style prompt; CosyVoice3 auto-appends `<\|endofprompt\|>`. With a built-in SFT voice this field is **ignored with a warning** — CosyVoice2/3 has no SFT-side instruct API. |
-
-> The text-normalization frontend is not exposed per-request; it is configured
-> globally with `COSYVOICE_TEXT_FRONTEND` (default `true`).
 
 ### `POST /v1/audio/clone` (multipart/form-data)
 
