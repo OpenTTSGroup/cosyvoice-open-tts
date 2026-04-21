@@ -1,0 +1,24 @@
+services:
+  cosyvoice:
+    image: ghcr.io/openttsgroup/cosyvoice-open-tts:latest
+    container_name: cosyvoice-open-tts
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./voices:/voices:ro
+      - ./cache:/root/.cache
+    environment:
+      COSYVOICE_MODEL: "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
+      COSYVOICE_VARIANT: "v3"
+      LOG_LEVEL: "info"
+      # Uncomment to fall back to CPU on a host without NVIDIA drivers:
+      # COSYVOICE_DEVICE: "cpu"
+      # COSYVOICE_DTYPE: "float32"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped

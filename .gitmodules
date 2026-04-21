@@ -1,3 +1,3 @@
-[submodule "CosyVoice"]
-	path = CosyVoice
+[submodule "engine"]
+	path = engine
 	url = https://github.com/FunAudioLLM/CosyVoice.git
