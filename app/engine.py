@@ -132,11 +132,6 @@ class TTSEngine:
     # ------------------------------------------------------------------
     # Prompt embedding cache
 
-    def _load_prompt_wav_16k(self, path: str):
-        from cosyvoice.utils.file_utils import load_wav
-
-        return load_wav(path, 16000)
-
     def _wrap_prompt_text_for_zero_shot(self, ref_text: str) -> str:
         """CosyVoice3 requires <|endofprompt|> in the LM input; mirror the
         upstream example by prefixing the reference transcript with a
@@ -172,20 +167,26 @@ class TTSEngine:
         ref_mtime: Optional[float],
         ref_text: str,
     ):
-        """Return (spk_id, prompt_wav).
+        """Return ``(spk_id, prompt_wav_path)``.
 
-        ``spk_id is None`` ⇒ caller must pass ``prompt_wav`` to ``inference_*``.
-        Otherwise ``prompt_wav`` may be ``None`` and ``zero_shot_spk_id``
-        carries the cached embedding inside CosyVoice's ``spk2info``.
+        CosyVoice's ``inference_*`` / ``add_zero_shot_spk`` expect
+        ``prompt_wav`` as a **path string** — internally the frontend runs
+        ``torchaudio.load(prompt_wav, backend='soundfile')`` at 24 kHz and
+        16 kHz. Passing a pre-loaded tensor raises
+        ``TypeError: Invalid file: tensor(...)``.
+
+        ``spk_id is None`` ⇒ caller must pass ``prompt_wav_path`` to
+        ``inference_*``. Otherwise ``prompt_wav_path`` is ``None`` and
+        ``zero_shot_spk_id`` carries the cached embedding inside
+        ``frontend.spk2info``.
         """
         if ref_mtime is None:
-            return None, self._load_prompt_wav_16k(ref_audio)
+            return None, ref_audio
 
         key = (ref_audio, ref_mtime)
         with self._prompt_lock:
             cached = self._prompt_cache.get(key)
             if cached is not None:
-                # Move to MRU position.
                 try:
                     self._prompt_cache_order.remove(key)
                 except ValueError:
@@ -193,13 +194,11 @@ class TTSEngine:
                 self._prompt_cache_order.append(key)
                 return cached, None
 
-        wav = self._load_prompt_wav_16k(ref_audio)
         spk_id = self._make_spk_id(ref_audio, ref_mtime)
         if not hasattr(self._model, "add_zero_shot_spk"):  # pragma: no cover
-            # CosyVoice >= 2 has it; fall back to no caching if ever missing.
-            return None, wav
+            return None, ref_audio
 
-        self._model.add_zero_shot_spk(ref_text, wav, spk_id)
+        self._model.add_zero_shot_spk(ref_text, ref_audio, spk_id)
 
         with self._prompt_lock:
             self._prompt_cache[key] = spk_id
@@ -259,12 +258,11 @@ class TTSEngine:
                 # instruct2 cannot share the zero_shot_spk cache: the upstream
                 # spk2info entry pins prompt_text to the reference transcript,
                 # but for instruct2 the model expects the instruction there.
-                # Re-extract acoustic features every call.
-                prompt_wav = self._load_prompt_wav_16k(ref_audio)
+                # Re-extract acoustic features every call, always by path.
                 gen = self._model.inference_instruct2(
                     text,
                     self._wrap_instructions_for_instruct2(instructions),
-                    prompt_wav,
+                    ref_audio,
                     zero_shot_spk_id="",
                     stream=False,
                     speed=speed,
@@ -272,13 +270,13 @@ class TTSEngine:
                 )
             else:
                 wrapped_ref_text = self._wrap_prompt_text_for_zero_shot(ref_text)
-                spk_id, prompt_wav = self._ensure_zero_shot_spk(
+                spk_id, prompt_wav_path = self._ensure_zero_shot_spk(
                     ref_audio, ref_mtime, wrapped_ref_text
                 )
                 gen = self._model.inference_zero_shot(
                     text,
                     wrapped_ref_text,
-                    prompt_wav,
+                    prompt_wav_path,
                     zero_shot_spk_id=spk_id or "",
                     stream=False,
                     speed=speed,
@@ -352,11 +350,10 @@ class TTSEngine:
                             type(self._model).__name__,
                         )
                     if use_instruct:
-                        prompt_wav = self._load_prompt_wav_16k(ref_audio)
                         gen = self._model.inference_instruct2(
                             text,
                             self._wrap_instructions_for_instruct2(instructions),
-                            prompt_wav,
+                            ref_audio,
                             zero_shot_spk_id="",
                             stream=True,
                             speed=1.0,
@@ -366,13 +363,13 @@ class TTSEngine:
                         wrapped_ref_text = self._wrap_prompt_text_for_zero_shot(
                             ref_text or ""
                         )
-                        spk_id, prompt_wav = self._ensure_zero_shot_spk(
+                        spk_id, prompt_wav_path = self._ensure_zero_shot_spk(
                             ref_audio, ref_mtime, wrapped_ref_text
                         )
                         gen = self._model.inference_zero_shot(
                             text,
                             wrapped_ref_text,
-                            prompt_wav,
+                            prompt_wav_path,
                             zero_shot_spk_id=spk_id or "",
                             stream=True,
                             speed=1.0,
