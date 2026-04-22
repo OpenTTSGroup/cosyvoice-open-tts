@@ -57,6 +57,21 @@ RUN pip install -r /tmp/requirements.api.txt
 COPY docker/requirements.engine.txt /tmp/requirements.engine.txt
 RUN pip install -r /tmp/requirements.engine.txt
 
+# openai-whisper 20231117 is an sdist without pyproject.toml, and its
+# setup.py does `import pkg_resources` at the top. Two fallout points:
+#   1. PEP 517 build isolation spins up a clean env with the newest
+#      setuptools (>=80), which has split pkg_resources out — wheel build
+#      fails immediately. --no-build-isolation makes pip reuse the venv's
+#      own setuptools (the Python 3.10 ensurepip bundled 59.6.0, still
+#      shipping pkg_resources).
+#   2. Ubuntu 22.04's python3.10 ensurepip bundles pip + setuptools but
+#      NOT wheel, so setuptools' `bdist_wheel` command is unavailable.
+#      Install wheel just long enough to build openai-whisper and then
+#      uninstall it so nothing build-only leaks into the runtime image.
+RUN pip install wheel && \
+    pip install --no-build-isolation openai-whisper==20231117 && \
+    pip uninstall -y wheel
+
 # Strip bytecode caches the tests and builds left behind.
 RUN find /opt/venv -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
 

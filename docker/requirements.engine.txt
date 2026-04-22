@@ -1,12 +1,25 @@
 # CosyVoice v2/v3 runtime dependencies (pinned to upstream versions).
 # Torch / torchaudio are installed separately in the Dockerfile from the
-# official PyTorch index. UI/training/optional-acceleration packages from
-# upstream CosyVoice/requirements.txt are intentionally omitted:
-#   * gradio, matplotlib, tensorboard, fastapi-cli, rich — demo/dev only
+# official PyTorch index. Packages from upstream CosyVoice/requirements.txt
+# that we intentionally omit:
+#   * gradio, tensorboard, fastapi-cli, wget, gdown — demo / dev / dataset-prep only
 #   * fastapi, uvicorn, pydantic — supplied by requirements.api.txt
 #   * grpcio, grpcio-tools — upstream gRPC service we do not expose
-#   * openai-whisper, wget, gdown — dataset/prep tooling
-#   * deepspeed, tensorrt-cu12* — optional accelerators (opt-in rebuild)
+#   * deepspeed — only needed for training and for opt-in JIT paths
+#   * tensorrt-cu12* — only needed for COSYVOICE_LOAD_TRT (opt-in rebuild)
+#
+# Packages we must keep because they are imported on Matcha-TTS / CosyVoice
+# module load (surprising, but confirmed by runtime failures):
+#   * rich       — matcha/utils/__init__.py pulls in matcha/utils/rich_utils.py
+#                  which does `import rich` at module scope
+#   * matplotlib — matcha/utils usually exposes a plotting helper imported
+#                  transitively from the same __init__; keep it to stay
+#                  aligned with upstream CosyVoice/requirements.txt
+#
+# openai-whisper IS required at runtime (cosyvoice/cli/frontend.py and
+# cosyvoice/tokenizer/tokenizer.py import it at module load), but it is
+# installed from the Dockerfile directly because the pinned 20231117 sdist
+# needs --no-build-isolation + a wheel shim; see docker/Dockerfile.
 --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 conformer==0.3.2
 diffusers==0.29.0
@@ -15,6 +28,7 @@ hydra-core==1.3.2
 inflect==7.3.1
 librosa==0.10.2
 lightning==2.2.4
+matplotlib==3.7.5
 modelscope==1.20.0
 networkx==3.1
 numpy==1.26.4
@@ -24,6 +38,7 @@ onnxruntime-gpu==1.18.0
 protobuf==4.25
 pyarrow==18.1.0
 pyworld==0.3.4
+rich==13.7.1
 transformers==4.51.3
 wetext==0.0.4
 x-transformers==2.11.24
